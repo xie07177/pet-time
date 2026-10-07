@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宠时光｜养宠成长记录与社区</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary:'#ff8866',
+                        secondary:'#48bbcc',
+                        soft:'#fff7f2'
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .card-shadow { box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+            .timeline-line { border-left:2px dashed #ffcdbc; }
+        }
+    </style>
+</head>
+<body class="bg-soft min-h-screen">
+    <!-- 顶部导航 -->
+    <header class="bg-white card-shadow sticky top-0 z-10">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-primary"><i class="fa fa-paw mr-2"></i>宠时光</h1>
+            <div class="flex gap-4">
+                <button onclick="switchTab('record')" class="tab-btn px-3 py-1 rounded-md">📝成长记录</button>
+                <button onclick="switchTab('timeline')" class="tab-btn px-3 py-1 rounded-md">📅时间线</button>
+                <button onclick="switchTab('community')" class="tab-btn px-3 py-1 rounded-md">👨‍👩‍👧宠友社区</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-6">
+        <!-- 1.宠物档案&健康记录面板 -->
+        <section id="tab-record" class="tab-panel">
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- 宠物基础信息 -->
+                <div class="bg-white rounded-xl p-5 card-shadow">
+                    <h2 class="text-lg font-semibold mb-4">🐶我的宠物档案</h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-sm text-gray-600">宠物名字</label>
+                            <input id="petName" type="text" class="w-full border rounded px-3 py-2 mt-1" placeholder="例如：年糕">
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-600">品种类型</label>
+                            <select id="petType" class="w-full border rounded px-3 py-2 mt-1">
+                                <option value="猫咪">猫咪</option>
+                                <option value="狗狗">狗狗</option>
+                                <option value="其他">其他小宠</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-600">所在城市（用于匹配同城宠友）</label>
+                            <input id="petCity" type="text" class="w-full border rounded px-3 py-2 mt-1" placeholder="杭州市">
+                        </div>
+                        <button onclick="savePetBase()" class="w-full bg-primary text-white py-2 rounded mt-2">保存基础档案</button>
+                    </div>
+                </div>
+
+                <!-- 健康数据录入：体重/疫苗/驱虫 -->
+                <div class="bg-white rounded-xl p-5 card-shadow">
+                    <h2 class="text-lg font-semibold mb-4">💉健康记录录入</h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-sm text-gray-600">记录类型</label>
+                            <select id="recordType" class="w-full border rounded px-3 py-2 mt-1">
+                                <option value="体重">体重(kg)</option>
+                                <option value="疫苗">疫苗接种</option>
+                                <option value="驱虫">驱虫</option>
+                                <option value="洗澡">洗澡护理</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-600">数值/备注</label>
+                            <input id="recordValue" type="text" class="w-full border rounded px-3 py-2 mt-1" placeholder="5.2 / 妙三多第一针">
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-600">记录日期</label>
+                            <input id="recordDate" type="date" class="w-full border rounded px-3 py-2 mt-1">
+                        </div>
+                        <button onclick="addHealthRecord()" class="w-full bg-secondary text-white py-2 rounded mt-2">添加这条健康记录</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 养宠日常分享发布 -->
+            <div class="bg-white rounded-xl p-5 card-shadow mt-6">
+                <h2 class="text-lg font-semibold mb-4">✨分享养宠日常</h2>
+                <textarea id="postContent" rows="3" class="w-full border rounded p-3" placeholder="记录毛孩子可爱瞬间，分享给同城宠友..."></textarea>
+                <button onclick="publishPost()" class="mt-3 bg-primary text-white px-5 py-2 rounded">发布动态</button>
+            </div>
+
+            <!-- 历史健康记录列表 -->
+            <div class="bg-white rounded-xl p-5 card-shadow mt-6">
+                <h2 class="text-lg font-semibold mb-4">📋全部健康记录</h2>
+                <div id="healthList" class="space-y-2 max-h-72 overflow-y-auto text-sm">
+                    <div class="text-gray-400">暂无记录，请添加第一条健康数据</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2.成长时间线面板 -->
+        <section id="tab-timeline" class="tab-panel hidden">
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <h2 class="text-lg font-semibold mb-5">⏳宠物成长时间线</h2>
+                <div id="timelineWrap" class="pl-6 timeline-line space-y-6">
+                    <div class="text-gray-400">还没有成长事件，录入健康记录就会生成时间线</div>
+                </div>
+            </div>
+        </section>
+
+        <!--3.宠友社区：同城匹配+动态流 -->
+        <section id="tab-community" class="tab-panel hidden">
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- 同城宠友 -->
+                <div class="bg-white rounded-xl p-5 card-shadow">
+                    <h2 class="text-lg font-semibold mb-4">🏙️同城宠友匹配</h2>
+                    <div class="text-sm text-gray-500 mb-2">基于你填写的城市匹配附近养宠用户</div>
+                    <div id="cityFriendList" class="space-y-3">
+                        <div class="text-gray-400">请先完善你的宠物档案里【所在城市】</div>
+                    </div>
+                </div>
+                <!-- 社区动态流 -->
+                <div class="md:col-span-2 bg-white rounded-xl p-5 card-shadow">
+                    <h2 class="text-lg font-semibold mb-4">📢养宠社区动态</h2>
+                    <div id="postFeed" class="space-y-4">
+                        <div class="text-gray-400">还没有动态，快去发布第一条养宠日常吧！</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+<script>
+//初始化本地存储
+if(!localStorage.getItem('petBase')) localStorage.setItem('petBase','{}');
+if(!localStorage.getItem('healthRecords')) localStorage.setItem('healthRecords','[]');
+if(!localStorage.getItem('communityPosts')) localStorage.setItem('communityPosts','[]');
+
+//切换Tab
+function switchTab(tabName){
+    document.querySelectorAll('.tab-panel').forEach(el=>el.classList.add('hidden'));
+    document.getElementById('tab-'+tabName).classList.remove('hidden');
+    renderAll();
+}
+
+//保存宠物基础档案
+function savePetBase(){
+    const pet = {
+        name:document.getElementById('petName').value,
+        type:document.getElementById('petType').value,
+        city:document.getElementById('petCity').value
+    }
+    localStorage.setItem('petBase', JSON.stringify(pet));
+    alert("✅宠物档案保存成功");
+    renderAll();
+}
+
+//新增健康记录
+function addHealthRecord(){
+    const type = document.getElementById('recordType').value;
+    const val = document.getElementById('recordValue').value;
+    const date = document.getElementById('recordDate').value;
+    if(!val || !date){ alert('请填写完整内容'); return; }
+    const arr = JSON.parse(localStorage.getItem('healthRecords'));
+    arr.push({type,value:val,date});
+    localStorage.setItem('healthRecords', JSON.stringify(arr));
+    alert('✅健康记录已添加');
+    renderAll();
+}
+
+//发布社区动态
+function publishPost(){
+    const content = document.getElementById('postContent').value.trim();
+    if(!content) return alert('请输入动态内容');
+    const petInfo = JSON.parse(localStorage.getItem('petBase'));
+    const posts = JSON.parse(localStorage.getItem('communityPosts'));
+    posts.push({
+        content,
+        petName: petInfo.name||"匿名宠主",
+        city: petInfo.city||"未知城市",
+        time: new Date().toLocaleString()
+    })
+    localStorage.setItem('communityPosts', JSON.stringify(posts));
+    document.getElementById('postContent').value = '';
+    renderAll();
+}
+
+//渲染全部数据
+function renderAll(){
+    const petBase = JSON.parse(localStorage.getItem('petBase'));
+    const health = JSON.parse(localStorage.getItem('healthRecords'));
+    const posts = JSON.parse(localStorage.getItem('communityPosts'));
+
+    //回填表单
+    document.getElementById('petName').value = petBase.name||'';
+    document.getElementById('petType').value = petBase.type||'猫咪';
+    document.getElementById('petCity').value = petBase.city||'';
+
+    //渲染健康列表
+    const hWrap = document.getElementById('healthList');
+    if(health.length===0){
+        hWrap.innerHTML = `<div class="text-gray-400">暂无记录，请添加第一条健康数据</div>`;
+    }else{
+        hWrap.innerHTML = health.map(item=>`
+        <div class="border-b py-2 flex justify-between">
+            <span>${item.date}</span>
+            <span class="font-medium text-primary">${item.type}</span>
+            <span>${item.value}</span>
+        </div>`).join('');
+    }
+
+    //渲染时间线（按日期排序）
+    const sorted = [...health].sort((a,b)=> new Date(a.date)-new Date(b.date));
+    const tWrap = document.getElementById('timelineWrap');
+    if(sorted.length===0){
+        tWrap.innerHTML = `<div class="text-gray-400">还没有成长事件，录入健康记录就会生成时间线</div>`;
+    }else{
+        tWrap.innerHTML = sorted.map(i=>`
+        <div class="relative">
+            <div class="absolute -left-[28px] w-3 h-3 rounded-full bg-primary"></div>
+            <div class="bg-soft p-3 rounded-lg">
+                <div class="font-medium">${i.date}｜${i.type}</div>
+                <div class="text-sm text-gray-600">${i.value}</div>
+            </div>
+        </div>`).join('');
+    }
+
+    //渲染社区动态流
+    const pFeed = document.getElementById('postFeed');
+    if(posts.length===0){
+        pFeed.innerHTML = `<div class="text-gray-400">还没有动态，快去发布第一条养宠日常吧！</div>`;
+    }else{
+        pFeed.innerHTML = posts.reverse().map(item=>`
+        <div class="border-b pb-3">
+            <div class="text-sm text-gray-500">${item.petName} · ${item.city} · ${item.time}</div>
+            <div class="mt-1">${item.content}</div>
+        </div>`).join('');
+    }
+
+    //模拟同城宠友匹配
+    const friendWrap = document.getElementById('cityFriendList');
+    if(!petBase.city){
+        friendWrap.innerHTML = `<div class="text-gray-400">请先完善你的宠物档案里【所在城市】</div>`;
+    }else{
+        //模拟同城用户
+        const mockFriends = [
+            {name:"喵小柒",pet:"布偶猫",city:petBase.city},
+            {name:"养狗的阿泽",pet:"金毛犬",city:petBase.city},
+            {name:"仓鼠团子妈",pet:"金丝熊",city:petBase.city}
+        ]
+        friendWrap.innerHTML = mockFriends.map(f=>`
+        <div class="border p-2 rounded text-sm">
+            <div class="font-medium">${f.name}</div>
+            <div class="text-gray-500">饲养：${f.pet}</div>
+            <div class="text-xs text-secondary">📍${f.city}</div>
+        </div>`).join('');
+    }
+}
+
+//页面加载渲染
+window.onload = renderAll;
+</script>
+</body>
+</html>
